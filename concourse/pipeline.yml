@@ -1,0 +1,160 @@
+resource_types:
+  - name: cron-resource
+    type: docker-image
+    source:
+      repository: cftoolsmiths/cron-resource
+
+resources:
+  - name: authorization-server-repo
+    type: git
+    source:
+      uri: "https://github.com/spring-projects-experimental/spring-authorization-server"
+  - name: daily-at-10-UTC
+    type: cron-resource
+    source:
+      expression: "0 10 * * *"
+      fire_immediately: true
+
+jobs:
+  - name: build-linux-jdk-8
+    plan:
+      - get: authorization-server-repo
+        trigger: true
+      - get: daily-at-10-UTC
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Starting build"]
+  - name: build-linux-jdk-11
+    plan:
+      - get: authorization-server-repo
+        trigger: true
+      - get: daily-at-10-UTC
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 11-jdk
+          run:
+            path: echo
+            args: ["Starting build"]
+  - name: build-linux-jdk-14
+    plan:
+      - get: authorization-server-repo
+        trigger: true
+      - get: daily-at-10-UTC
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 14-jdk
+          run:
+            path: echo
+            args: ["Starting build"]
+  - name: test-snapshots
+    plan:
+      - get: authorization-server-repo
+        trigger: true
+      - get: daily-at-10-UTC
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Testing against snapshots"]
+  - name: static-code-analysis
+    plan:
+      - get: authorization-server-repo
+        trigger: true
+      - get: daily-at-10-UTC
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Running Sonarqube static code analysis"]
+  - name: deploy-artifacts
+    plan:
+      - get: authorization-server-repo
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - get: daily-at-10-UTC
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Deploying Artifacts"]
+  - name: deploy-docs
+    plan:
+      - get: authorization-server-repo
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - get: daily-at-10-UTC
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Deploying Docs"]
+  - name: deploy-schema
+    plan:
+      - get: authorization-server-repo
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - get: daily-at-10-UTC
+        passed: [build-linux-jdk-8,build-linux-jdk-11,build-linux-jdk-14,test-snapshots,static-code-analysis]
+        trigger: true
+      - task: build
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: openjdk
+              tag: 8-jdk
+          run:
+            path: echo
+            args: ["Deploying Schema"]
